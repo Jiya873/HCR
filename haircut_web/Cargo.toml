@@ -1,0 +1,10 @@
+[package]
+name = "haircut_web"
+version = "0.1.0"
+edition = "2024"
+build = "build.rs"
+
+[dependencies]
+hotaru = "0.8.1"
+tokio = { version = "1", features = ["full"] }
+haircut_core = { path = "../haircut_core" }

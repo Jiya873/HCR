@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Haircut Simulator — hotaru</title>
+  <style>
+    html, body { margin: 0; padding: 0; background: #fafafa; height: 100%; font-family: system-ui, sans-serif; }
+    header { padding: 8px 14px; background: #fff; border-bottom: 1px solid #e7e7ea; display: flex; align-items: center; gap: 14px; }
+    header h1 { margin: 0; font-size: 14px; font-weight: 600; }
+    header p  { margin: 0; color: #777; font-size: 12px; flex: 1; }
+    button#start {
+      font: inherit; font-size: 13px; padding: 6px 14px;
+      background: #2c7d3c; color: #fff; border: none; border-radius: 4px;
+      cursor: pointer;
+    }
+    button#start[disabled] { background: #aaa; cursor: default; }
+    #status { color: #2c7d3c; font-size: 12px; }
+    #scene  { width: 100%; height: calc(100% - 50px); display: flex; align-items: center; justify-content: center; }
+    #scene svg { max-width: min(95vh, 95vw); max-height: 95vh; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Haircut Simulator — hotaru-served</h1>
+    <p>The simulation is paused until you press the button. Movement is hard-coded in Rust (<code>MovementScript</code> impl).</p>
+    <button id="start" type="button">Start cutting</button>
+    <span id="status">paused</span>
+  </header>
+  <div id="scene">loading…</div>
+  <script>
+    const el = document.getElementById('scene');
+    const btn = document.getElementById('start');
+    const status = document.getElementById('status');
+
+    async function tick() {
+      try {
+        const r = await fetch('/scene.svg', { cache: 'no-store' });
+        if (r.ok) el.innerHTML = await r.text();
+      } catch (e) { /* transient errors are fine */ }
+    }
+    setInterval(tick, 50);
+    tick();
+
+    async function syncState() {
+      try {
+        const r = await fetch('/state', { cache: 'no-store' });
+        if (!r.ok) return;
+        const state = (await r.text()).trim();
+        if (state === 'running') {
+          btn.disabled = true;
+          status.textContent = 'cutting';
+        }
+      } catch (e) { /* ignore */ }
+    }
+    syncState();
+
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      status.textContent = 'starting…';
+      try {
+        const r = await fetch('/start', { method: 'POST' });
+        if (r.ok) status.textContent = 'cutting';
+        else      status.textContent = 'server error';
+      } catch (e) {
+        status.textContent = 'request failed';
+      }
+    });
+  </script>
+</body>
+</html>
