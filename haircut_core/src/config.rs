@@ -17,7 +17,7 @@ pub struct HeadConfig {
 pub struct WorldBounds {
     pub min: Vec3,
     pub max: Vec3,
-    pub floor_z: f32,
+    pub floor_y: f32,
 }
 
 /// All numeric tunables driving the integrator, hair, and clipper kinematics.
@@ -48,7 +48,7 @@ pub struct SimulationConfig {
 impl Default for HeadConfig {
     fn default() -> Self {
         Self {
-            center: Vec3::new(0.0, 0.0, 0.8),
+            center: Vec3::new(0.0, 0.3, 0.7),
             radii: Vec3::new(0.75, 0.85, 0.85),
         }
     }
@@ -59,7 +59,7 @@ impl Default for WorldBounds {
         Self {
             min: Vec3::new(-2.0, -2.0, -0.5),
             max: Vec3::new(2.0, 2.0, 3.0),
-            floor_z: -1.5,
+            floor_y: -0.6,
         }
     }
 }
@@ -67,7 +67,7 @@ impl Default for WorldBounds {
 impl Default for TuningConfig {
     fn default() -> Self {
         Self {
-            gravity: Vec3::new(0.0, 0.0, -0.04),
+            gravity: Vec3::new(0.0, -0.04, 0.0),
             damping: 0.95,
             rigidity: 0.08,
             hair_length: 1.0,
@@ -76,7 +76,7 @@ impl Default for TuningConfig {
             base_num_strands: 650,
             clipper_radius: 0.12,
             move_speed: 0.04,
-            dt: 0.8,
+            dt: 0.2,
         }
     }
 }
@@ -87,7 +87,7 @@ impl Default for SimulationConfig {
             head: HeadConfig::default(),
             bounds: WorldBounds::default(),
             tuning: TuningConfig::default(),
-            clipper_initial_pos: Vec3::new(0.0, -1.7, 1.0),
+            clipper_initial_pos: Vec3::new(0.0, 2.0, -1.7),
             rng_seed: 1,
         }
     }
@@ -111,8 +111,8 @@ impl SimulationConfig {
         if !is_finite_vec3(self.bounds.min) || !is_finite_vec3(self.bounds.max) {
             return Err("world bounds must be finite".to_string());
         }
-        if !self.bounds.floor_z.is_finite() {
-            return Err("floor_z must be finite".to_string());
+        if !self.bounds.floor_y.is_finite() {
+            return Err("floor_y must be finite".to_string());
         }
 
         if !is_finite_vec3(self.tuning.gravity) {
@@ -175,8 +175,8 @@ impl SimulationConfig {
         {
             return Err("world bounds min must not exceed max".to_string());
         }
-        if self.bounds.floor_z > self.bounds.max.z {
-            return Err("floor_z must be at or below bounds.max.z".to_string());
+        if self.bounds.floor_y > self.bounds.max.y {
+            return Err("floor_y must be at or below bounds.max.y".to_string());
         }
 
         Ok(())

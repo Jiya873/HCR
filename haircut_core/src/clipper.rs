@@ -8,7 +8,7 @@ pub enum ClipperCommand {
     MoveRight,
     MoveForward,
     MoveBackward,
-    SetTargetXz { x: f32, z: f32 },
+    SetTargetXyz { x: f32, y: f32, z: f32 },
     Reset,
     ActivateCutting,
     DeactivateCutting,
@@ -48,8 +48,9 @@ impl ClipperState {
         self.actual_pos = self.target_pos;
     }
 
-    pub fn set_target_xz(&mut self, x: f32, z: f32, bounds_min: Vec3, bounds_max: Vec3) {
+    pub fn set_target_xyz(&mut self, x: f32, y: f32, z: f32, bounds_min: Vec3, bounds_max: Vec3) {
         self.target_pos.x = x;
+        self.target_pos.y = y; // <-- NOW WE ARE UPDATING HEIGHT
         self.target_pos.z = z;
         self.target_pos = self.target_pos.clamp(bounds_min, bounds_max);
         self.actual_pos = self.target_pos;

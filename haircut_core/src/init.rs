@@ -25,8 +25,8 @@ pub fn generate_hair_roots(
             continue;
         }
 
-        let offset = Vec3::new(ux * head.radii.x, uy * head.radii.y, uz * head.radii.z);
-        let normal = Vec3::new(ux, uy, uz).normalized();
+        let offset = Vec3::new(ux * head.radii.x, uz * head.radii.y, uy * head.radii.z);
+        let normal = Vec3::new(ux, uz, uy).normalized();
         roots.push(HairRoot { offset, normal });
     }
 

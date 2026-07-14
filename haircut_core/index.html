@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>HCR Web Twin - Connected & Mocked</title>
+    <style>
+        html, body { margin: 0; height: 100%; overflow: hidden; background: #111; color: #eee; font-family: sans-serif; }
+        #c { width: 100%; height: 100%; touch-action: none; display: block; }
+    </style>
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+</head>
+<body>
+    <div id="debug" style="position: fixed; top: 10px; left: 10px; color: yellow; background: rgba(0,0,0,0.5); padding: 10px; z-index: 100;">
+    Waiting for MQTT data...
+    </div>
+    <canvas id="c"></canvas>
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <script type="module">
+    import init, { WebSimulator } from "./pkg/haircut_core.js";
+
+    async function run() {
+        await init();
+
+        const canvas = document.getElementById("c");
+        const engine = new BABYLON.Engine(canvas, true, { adaptToDeviceRatio: true });
+
+        const scene = new BABYLON.Scene(engine);
+        scene.clearColor = new BABYLON.Color4(0.07, 0.07, 0.07, 1);
+
+        const cam = new BABYLON.ArcRotateCamera("cam", -Math.PI / 2, Math.PI / 2.4, 5, new BABYLON.Vector3(0.0, 0.7, 0.7), scene);
+        cam.attachControl(canvas, true);
+
+        new BABYLON.HemisphericLight("h", new BABYLON.Vector3(0, 1, 0), scene);
+        
+        const head = BABYLON.MeshBuilder.CreateSphere("head", { diameter: 2, segments: 32 }, scene);
+        head.scaling = new BABYLON.Vector3(0.75, 0.85, 0.85);
+        head.position.set(0.0, 0.3, 0.7);
+        const headMat = new BABYLON.StandardMaterial("headMat", scene);
+        headMat.diffuseColor = new BABYLON.Color3(0.94, 0.78, 0.66);
+        head.material = headMat;
+
+        const clipperRadius = 0.08;
+        const clipperMesh = BABYLON.MeshBuilder.CreateSphere("clipper", { diameter: clipperRadius * 2 }, scene);
+        const clipperMat = new BABYLON.StandardMaterial("clipperMat", scene);
+        clipperMat.diffuseColor = new BABYLON.Color3(1, 0.1, 0.1);
+        clipperMesh.material = clipperMat;
+        clipperMesh.position.set(1.0, 1.0, -0.06); 
+
+        const floorY = -0.6; 
+        const floor = BABYLON.MeshBuilder.CreateDisc("floor", { radius: 3 }, scene);
+        floor.rotation.x = Math.PI / 2;
+        floor.position.y = floorY;
+
+        const simulator = new WebSimulator();
+
+        const client = mqtt.connect('ws://127.0.0.1:8084'); 
+
+        client.on('connect', function () {
+            document.getElementById('debug').innerText = "Connected! Listening to twin/state/+ ...";
+            client.subscribe('twin/state/+');
+        });
+
+        client.on('message', function (topic, message) {
+            const rawString = message.toString();
+            document.getElementById('debug').innerText = `Topic: ${topic}\nPayload: ${rawString}`;
+
+            const data = JSON.parse(rawString);
+
+            if (data.x !== undefined && data.y !== undefined && data.z !== undefined) {
+                clipperMesh.position.x = data.x;
+                clipperMesh.position.y = data.y;
+                clipperMesh.position.z = data.z;
+            
+                simulator.update_clipper(data.x, data.y, data.z);
+            }
+        
+            if (data.is_cutting !== undefined) {
+                simulator.set_cutting(data.is_cutting);
+            }
+        });
+
+        const totalHairStrands = 650;
+        const nodesPerStrand = 12;
+        const hairMeshes = [];
+        const initialPositions = simulator.get_hair_positions();
+
+        for (let s = 0; s < totalHairStrands; s++) {
+            const pointsForMesh = [];
+            for (let n = 0; n < nodesPerStrand; n++) {
+                const idx = (s * nodesPerStrand + n) * 3;
+                pointsForMesh.push(new BABYLON.Vector3(
+                    initialPositions[idx],
+                    initialPositions[idx + 1],
+                    initialPositions[idx + 2]
+                ));
+            }
+            const hairMesh = BABYLON.MeshBuilder.CreateLines("h_" + s, { points: pointsForMesh, updatable: true }, scene);
+            hairMesh.color = new BABYLON.Color3(0.15, 0.15, 0.15);
+            hairMeshes.push(hairMesh);
+        }
+
+        engine.runRenderLoop(() => {
+            simulator.step();
+
+            const updatedPositions = simulator.get_hair_positions();
+            const lengths = simulator.get_hair_lengths();
+
+            const cutHairsCount = Array.from(lengths).filter(l => l < 12).length;
+            if (cutHairsCount > 0) {
+                console.log(` Rust SIM is working! ${cutHairsCount} hairs have been cut.`);
+            } else {
+                console.log(" Rust SIM is reporting ZERO cuts.");
+            }
+
+            let offset = 0;
+            for (let s = 0; s < totalHairStrands; s++) {
+                const updatedPoints = [];
+                const activeNodes = lengths[s];
+                let lastValidPoint = null;
+
+
+                for (let n = 0; n < nodesPerStrand; n++) {
+                    const currentPoint = new BABYLON.Vector3(
+                        updatedPositions[offset],
+                        updatedPositions[offset + 1],
+                        updatedPositions[offset + 2]
+                    );
+
+                    if (n < activeNodes) {
+                        lastValidPoint = currentPoint;
+                        updatedPoints.push(lastValidPoint);
+                    } else {
+                        // If the node is cut, collapse it into the hair's cut tip 
+                        // (or fallback to the root position if the whole strand is gone)
+                        updatedPoints.push(lastValidPoint || currentPoint);
+                    }
+                    offset += 3;
+                }
+                
+                if (activeNodes > 1) {
+                    hairMeshes[s] = BABYLON.MeshBuilder.CreateLines(null, { 
+                        points: updatedPoints, 
+                        instance: hairMeshes[s] 
+                    });
+                    hairMeshes[s].isVisible = true;
+                } else {
+                    hairMeshes[s].isVisible = false;
+                }
+            }
+            scene.render();
+        });
+
+        window.addEventListener("resize", () => engine.resize());
+
+        const dummyDataset = [
+            { topic: "twin/state/r01", payload: '{"x": 1.0, "y": 1.0, "z": -0.06, "is_cutting": false}' },
+            { topic: "twin/state/r01", payload: '{"x": 0.9, "y": 1.0, "z": -0.06, "is_cutting": true}' },
+            { topic: "twin/state/r01", payload: '{"x": 0.9, "y": 1.0, "z": 0.0, "is_cutting": true}' },
+            { topic: "twin/state/r01", payload: '{"x": 0.9, "y": 0.8, "z": 0.2, "is_cutting": true}' },
+            { topic: "twin/state/r01", payload: '{"x": 0.9, "y": 0.6, "z": 0.5, "is_cutting": true}' },
+            { topic: "twin/state/r01", payload: '{"x": 0.9, "y": 0.3, "z": 0.8, "is_cutting": true}' },
+            { topic: "twin/state/r01", payload: '{"x": 0.9, "y": 0.3, "z": 1.1, "is_cutting": true}' },
+            { topic: "twin/state/r01", payload: '{"x": 0.9, "y": 0.3, "z": 1.3, "is_cutting": true}' },
+            { topic: "twin/state/r01", payload: '{"x": 0.85, "y": 0.3, "z": 1.5, "is_cutting": true}' },
+            { topic: "twin/state/r01", payload: '{"x": 0.65, "y": 0.3, "z": 1.7, "is_cutting": true}' },
+            { topic: "twin/state/r01", payload: '{"x": 0.4, "y": 0.3, "z": 1.7, "is_cutting": true}' },
+            { topic: "twin/state/r01", payload: '{"x": 0.15, "y": 0.3, "z": 1.8, "is_cutting": true}' },
+            { topic: "twin/state/r01", payload: '{"x": 0.0, "y": 0.3, "z": 1.8, "is_cutting": true}' },
+            { topic: "twin/state/r01", payload: '{"x": -0.2, "y": 0.3, "z": 1.8, "is_cutting": true}' },
+            { topic: "twin/state/r01", payload: '{"x": -0.35, "y": 0.3, "z": 1.65, "is_cutting": true}' },
+            { topic: "twin/state/r01", payload: '{"x": -0.5, "y": 0.3, "z": 1.65, "is_cutting": true}' },
+            { topic: "twin/state/r01", payload: '{"x": -0.65, "y": 0.3, "z": 1.5, "is_cutting": true}' },
+            { topic: "twin/state/r01", payload: '{"x": -0.85, "y": 0.3, "z": 1.35, "is_cutting": true}' },
+            { topic: "twin/state/r01", payload: '{"x": -0.9, "y": 0.4, "z": 1.2, "is_cutting": true}' },
+            { topic: "twin/state/r01", payload: '{"x": -0.9, "y": 0.46, "z": 0.9, "is_cutting": true}' },
+            { topic: "twin/state/r01", payload: '{"x": -0.9, "y": 0.55, "z": 0.8, "is_cutting": true}' },
+            { topic: "twin/state/r01", payload: '{"x": -0.85, "y": 0.65, "z": 0.6, "is_cutting": true}' },
+            { topic: "twin/state/r01", payload: '{"x": -0.85, "y": 0.65, "z": 0.6, "is_cutting": false}' }
+                        
+        ];
+
+        let currentFrame = 0;
+        
+        setTimeout(() => {
+            const playbackInterval = setInterval(() => {
+                if (currentFrame < dummyDataset.length) {
+                    const msg = dummyDataset[currentFrame];
+                    client.emit('message', msg.topic, msg.payload);
+                    currentFrame++;
+                } else {
+                    clearInterval(playbackInterval);
+                }
+            }, 300);
+        }, 2000);
+    }
+
+    run();
+    </script>
+</body>
+</html>

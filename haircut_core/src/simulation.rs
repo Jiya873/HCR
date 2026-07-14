@@ -131,7 +131,6 @@ impl Simulation {
 
     pub fn reset_clipper(&mut self) {
         self.clipper.reset();
-        self.clipper.resolve_against_head(&self.head);
     }
 
     pub fn regenerate(&mut self, seed: u64) {
@@ -222,12 +221,12 @@ impl Simulation {
                 .move_by(delta, self.config.bounds.min, self.config.bounds.max);
         } else {
             match cmd {
-                ClipperCommand::SetTargetXz { x, z } => {
-                    if !x.is_finite() || !z.is_finite() {
+                ClipperCommand::SetTargetXyz { x, y, z } => { // <-- CHANGED THIS
+                    if !x.is_finite() || !y.is_finite() || !z.is_finite() {
                         return Err("clipper target coordinates must be finite".to_string());
                     }
                     self.clipper
-                        .set_target_xz(x, z, self.config.bounds.min, self.config.bounds.max)
+                        .set_target_xyz(x, y, z, self.config.bounds.min, self.config.bounds.max)
                 }
                 ClipperCommand::Reset => self.reset_clipper(),
                 ClipperCommand::ActivateCutting => self.clipper.set_cutting(true),

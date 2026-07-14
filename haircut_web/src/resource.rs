@@ -23,7 +23,7 @@ pub fn locate_resource(resource_path: &str) -> Option<PathBuf> {
     }
     
     // Strategy 3: Check workspace root (if applicable)
-    if false {
+    if true {
         if let Some(workspace_root) = find_workspace_root() {
             let workspace_relative = workspace_root.join(resource_path);
             if workspace_relative.exists() {
