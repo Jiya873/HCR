@@ -10,9 +10,6 @@
     <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 </head>
 <body>
-    <div id="debug" style="position: fixed; top: 10px; left: 10px; color: yellow; background: rgba(0,0,0,0.5); padding: 10px; z-index: 100;">
-    Waiting for MQTT data...
-    </div>
     <canvas id="c"></canvas>
     <script src="https://cdn.babylonjs.com/babylon.js"></script>
     <script type="module">
@@ -57,13 +54,11 @@
         const client = mqtt.connect('ws://127.0.0.1:8084'); 
 
         client.on('connect', function () {
-            document.getElementById('debug').innerText = "Connected! Listening to twin/state/+ ...";
             client.subscribe('twin/state/+');
         });
 
         client.on('message', function (topic, message) {
             const rawString = message.toString();
-            document.getElementById('debug').innerText = `Topic: ${topic}\nPayload: ${rawString}`;
 
             const data = JSON.parse(rawString);
 
@@ -108,12 +103,6 @@
             const cutHairsCount = Array.from(lengths).filter(l => l < 12).length;
 
             clipperMesh.position.set(cPos[0], cPos[1], cPos[2]);
-
-            if (cutHairsCount > 0) {
-                console.log(` Rust SIM is working! ${cutHairsCount} hairs have been cut.`);
-            } else {
-                console.log(" Rust SIM is reporting ZERO cuts.");
-            }
 
             let offset = 0;
             for (let s = 0; s < totalHairStrands; s++) {
