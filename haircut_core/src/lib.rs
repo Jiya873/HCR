@@ -26,6 +26,10 @@ use wasm_bindgen::prelude::*;
 #[wasm_bindgen]
 pub struct WebSimulator {
     engine: Simulation,
+    hair_positions: Vec<f32>,
+    hair_lengths: Vec<f32>,
+    debris_positions: Vec<f32>,
+    debris_lengths: Vec<usize>,
 }
 
 #[wasm_bindgen]
@@ -35,40 +39,59 @@ impl WebSimulator {
         let config = SimulationConfig::default();
         let mut engine = Simulation::new(config).expect("Failed to start engine");
         let _ = engine.apply_command(RuntimeCommand::Clipper(ClipperCommand::ActivateCutting));
-        Self { engine }
+        Self { 
+            engine,
+            hair_positions: Vec::new(),
+            hair_lengths: Vec::new(),
+            debris_positions: Vec::new(),
+            debris_lengths: Vec::new(),
+        }
     }
 
     pub fn step(&mut self) {
         self.engine.step();
+        self.update_buffers();
     }
 
-    pub fn get_hair_lengths(&self) -> Vec<f32> {
-        self.engine
-            .strands()
-            .iter()
-            .map(|strand| strand.active_len as f32)
-            .collect()
-    }
-
-    pub fn get_hair_positions(&self) -> Vec<f32> {
-        let mut positions = Vec::new();
-        
+    fn update_buffers(&mut self) {
+        self.hair_positions.clear();
+        self.hair_lengths.clear();
         for strand in self.engine.strands() {
+            self.hair_lengths.push(strand.active_len as f32);
             for node in &strand.nodes {
-                positions.push(node.position.x);
-                positions.push(node.position.y);
-                positions.push(node.position.z);
+                self.hair_positions.push(node.position.x);
+                self.hair_positions.push(node.position.y);
+                self.hair_positions.push(node.position.z);
             }
         }
-        
-        positions
+
+        self.debris_positions.clear();
+        self.debris_lengths.clear();
+        for segment in self.engine.debris() {
+            self.debris_lengths.push(segment.points.len());
+            for point in &segment.points {
+                self.debris_positions.push(point.position.x);
+                self.debris_positions.push(point.position.y);
+                self.debris_positions.push(point.position.z);
+            }
+        }
+    }
+
+    pub fn get_hair_positions_ptr(&self) -> *const f32 {
+        self.hair_positions.as_ptr()
+    }
+
+    pub fn get_hair_positions_len(&self) -> usize {
+        self.hair_positions.len()
+    }
+
+    pub fn get_hair_lengths_ptr(&self) -> *const f32 {
+        self.hair_lengths.as_ptr()
     }
 
     pub fn get_clipper_position(&self) -> Vec<f32> {
         let clipper = self.engine.clipper();
-        
-        let pos = clipper.actual_pos; 
-        vec![pos.x, pos.y, pos.z]
+        vec![clipper.actual_pos.x, clipper.actual_pos.y, clipper.actual_pos.z]
     }
 
     pub fn update_clipper(&mut self, x: f32, y: f32, z: f32) {
@@ -85,29 +108,15 @@ impl WebSimulator {
         let _ = self.engine.apply_command(RuntimeCommand::Clipper(cmd));
     }
 
-    pub fn get_debris_positions(&self) -> Vec<f32> {
-        let mut positions = Vec::new();
-        
-        for segment in self.engine.debris() {
-            for point in &segment.points {
-                positions.push(point.position.x);
-                positions.push(point.position.y);
-                positions.push(point.position.z);
-            }
-        }
-        
-        positions
+    pub fn get_debris_positions_ptr(&self) -> *const f32 {
+        self.debris_positions.as_ptr()
+    }
+
+    pub fn get_debris_lengths_ptr(&self) -> *const usize {
+        self.debris_lengths.as_ptr()
     }
     
     pub fn get_debris_count(&self) -> usize {
-        self.engine.debris().len()
-    }
-
-    pub fn get_debris_lengths(&self) -> Vec<usize> {
-        self.engine
-            .debris()
-            .iter()
-            .map(|segment| segment.points.len())
-            .collect()
+        self.debris_lengths.len()
     }
 }

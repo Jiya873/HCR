@@ -17,7 +17,7 @@
     import init, { WebSimulator } from "./pkg/haircut_core.js";
 
     async function run() {
-        await init();
+        const wasm = await init();
 
         const canvas = document.getElementById("c");
         const engine = new BABYLON.Engine(canvas, true, { adaptToDeviceRatio: true });
@@ -58,9 +58,7 @@
         });
 
         client.on('message', function (topic, message) {
-            const rawString = message.toString();
-
-            const data = JSON.parse(rawString);
+            const data = JSON.parse(message.toString());
 
             if (data.x !== undefined && data.y !== undefined && data.z !== undefined) {            
                 simulator.update_clipper(data.x, data.y, data.z);
@@ -74,7 +72,11 @@
         const totalHairStrands = 650;
         const nodesPerStrand = 12;
         const hairMeshes = [];
-        const initialPositions = simulator.get_hair_positions();
+        
+        simulator.step(); 
+        const initPtr = simulator.get_hair_positions_ptr();
+        const initLen = simulator.get_hair_positions_len();
+        const initialPositions = new Float32Array(wasm.memory.buffer, initPtr, initLen);
 
         for (let s = 0; s < totalHairStrands; s++) {
             const pointsForMesh = [];
@@ -95,13 +97,25 @@
         engine.runRenderLoop(() => {
             simulator.step();
 
-            const updatedPositions = simulator.get_hair_positions();
-            const lengths = simulator.get_hair_lengths();
-            const debrisLengths = simulator.get_debris_lengths();
-            const debrisPos = simulator.get_debris_positions();
-            const cPos = simulator.get_clipper_position(); 
-            const cutHairsCount = Array.from(lengths).filter(l => l < 12).length;
+            const hPosPtr = simulator.get_hair_positions_ptr();
+            const hPosLen = simulator.get_hair_positions_len();
+            const updatedPositions = new Float32Array(wasm.memory.buffer, hPosPtr, hPosLen);
 
+            const hLenPtr = simulator.get_hair_lengths_ptr();
+            const lengths = new Float32Array(wasm.memory.buffer, hLenPtr, totalHairStrands);
+
+            const dLenPtr = simulator.get_debris_lengths_ptr();
+            const dCount = simulator.get_debris_count();
+            const debrisLengths = new Uint32Array(wasm.memory.buffer, dLenPtr, dCount);
+
+            let totalDebrisNumbers = 0;
+            for (let i = 0; i < dCount; i++) {
+                totalDebrisNumbers += debrisLengths[i] * 3;
+            }
+            const dPosPtr = simulator.get_debris_positions_ptr();
+            const debrisPos = new Float32Array(wasm.memory.buffer, dPosPtr, totalDebrisNumbers);
+
+            const cPos = simulator.get_clipper_position(); 
             clipperMesh.position.set(cPos[0], cPos[1], cPos[2]);
 
             let offset = 0;
@@ -109,7 +123,6 @@
                 const updatedPoints = [];
                 const activeNodes = lengths[s];
                 let lastValidPoint = null;
-
 
                 for (let n = 0; n < nodesPerStrand; n++) {
                     const currentPoint = new BABYLON.Vector3(
