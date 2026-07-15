@@ -185,55 +185,6 @@
 
         window.addEventListener("resize", () => engine.resize());
 
-        const dummyDataset = [
-            { topic: "twin/state/r01", payload: '{"x": 1.0, "y": 1.0, "z": -0.06, "is_cutting": false}' },
-            { topic: "twin/state/r01", payload: '{"x": 0.9, "y": 1.0, "z": -0.06, "is_cutting": true}' },
-            { topic: "twin/state/r01", payload: '{"x": 0.9, "y": 1.0, "z": 0.0, "is_cutting": true}' },
-            { topic: "twin/state/r01", payload: '{"x": 0.9, "y": 0.8, "z": 0.2, "is_cutting": true}' },
-            { topic: "twin/state/r01", payload: '{"x": 0.9, "y": 0.6, "z": 0.5, "is_cutting": true}' },
-            { topic: "twin/state/r01", payload: '{"x": 0.9, "y": 0.3, "z": 0.8, "is_cutting": true}' },
-            { topic: "twin/state/r01", payload: '{"x": 0.9, "y": 0.3, "z": 1.1, "is_cutting": true}' },
-            { topic: "twin/state/r01", payload: '{"x": 0.9, "y": 0.3, "z": 1.3, "is_cutting": true}' },
-            { topic: "twin/state/r01", payload: '{"x": 0.85, "y": 0.3, "z": 1.5, "is_cutting": true}' },
-            { topic: "twin/state/r01", payload: '{"x": 0.65, "y": 0.3, "z": 1.7, "is_cutting": true}' },
-            { topic: "twin/state/r01", payload: '{"x": 0.4, "y": 0.3, "z": 1.7, "is_cutting": true}' },
-            { topic: "twin/state/r01", payload: '{"x": 0.15, "y": 0.3, "z": 1.8, "is_cutting": true}' },
-            { topic: "twin/state/r01", payload: '{"x": 0.0, "y": 0.3, "z": 1.8, "is_cutting": true}' },
-            { topic: "twin/state/r01", payload: '{"x": -0.2, "y": 0.3, "z": 1.8, "is_cutting": true}' },
-            { topic: "twin/state/r01", payload: '{"x": -0.35, "y": 0.3, "z": 1.65, "is_cutting": true}' },
-            { topic: "twin/state/r01", payload: '{"x": -0.5, "y": 0.3, "z": 1.65, "is_cutting": true}' },
-            { topic: "twin/state/r01", payload: '{"x": -0.65, "y": 0.3, "z": 1.5, "is_cutting": true}' },
-            { topic: "twin/state/r01", payload: '{"x": -0.85, "y": 0.3, "z": 1.35, "is_cutting": true}' },
-            { topic: "twin/state/r01", payload: '{"x": -0.9, "y": 0.4, "z": 1.2, "is_cutting": true}' },
-            { topic: "twin/state/r01", payload: '{"x": -0.9, "y": 0.46, "z": 0.9, "is_cutting": true}' },
-            { topic: "twin/state/r01", payload: '{"x": -0.9, "y": 0.55, "z": 0.8, "is_cutting": true}' },
-            { topic: "twin/state/r01", payload: '{"x": -0.85, "y": 0.65, "z": 0.6, "is_cutting": true}' },
-            { topic: "twin/state/r01", payload: '{"x": -0.85, "y": 0.8, "z": 0.55, "is_cutting": true}' },
-            { topic: "twin/state/r01", payload: '{"x": -0.85, "y": 0.8, "z": 0.4, "is_cutting": true}' },
-            { topic: "twin/state/r01", payload: '{"x": -0.85, "y": 0.8, "z": 0.3, "is_cutting": true}' },
-            { topic: "twin/state/r01", payload: '{"x": -0.85, "y": 0.9, "z": 0.3, "is_cutting": true}' },
-            { topic: "twin/state/r01", payload: '{"x": -0.75, "y": 1.0, "z": 0.3, "is_cutting": true}' },
-            { topic: "twin/state/r01", payload: '{"x": -0.65, "y": 1.0, "z": 0.25, "is_cutting": true}' },
-            { topic: "twin/state/r01", payload: '{"x": -0.55, "y": 1.1, "z": 0.15, "is_cutting": true}' },
-            { topic: "twin/state/r01", payload: '{"x": -0.45, "y": 1.1, "z": 0.15, "is_cutting": true}' },
-            { topic: "twin/state/r01", payload: '{"x": -0.45, "y": 1.1, "z": 0.05, "is_cutting": true}' },
-            { topic: "twin/state/r01", payload: '{"x": -0.45, "y": 1.1, "z": 0.05, "is_cutting": false}' }
-                        
-        ];
-
-        let currentFrame = 0;
-        
-        setTimeout(() => {
-            const playbackInterval = setInterval(() => {
-                if (currentFrame < dummyDataset.length) {
-                    const msg = dummyDataset[currentFrame];
-                    client.emit('message', msg.topic, msg.payload);
-                    currentFrame++;
-                } else {
-                    clearInterval(playbackInterval);
-                }
-            }, 300);
-        }, 2000);
     }
 
     run();
