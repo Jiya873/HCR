@@ -66,6 +66,7 @@ impl Simulation {
     }
 
     pub fn step(&mut self) -> StepSummary {
+        self.clipper.update_kinematics(self.config.tuning.move_speed, self.config.tuning.dt);
         self.clipper.resolve_against_head(&self.head);
 
         let before_lengths = self
@@ -92,7 +93,7 @@ impl Simulation {
         update_debris(
             &mut self.debris,
             self.config.tuning.gravity,
-            self.config.bounds.floor_z,
+            self.config.bounds.floor_y,
             self.config.tuning.dt,
         );
 

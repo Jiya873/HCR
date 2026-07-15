@@ -79,7 +79,7 @@ pub fn update_strands(
                     velocity: Vec3::new(
                         rng.gen_range(-0.025..0.025),
                         rng.gen_range(-0.025..0.025),
-                        gravity.z * 0.5,
+                        gravity.y * 0.5,
                     ),
                     is_stopped: false,
                 })

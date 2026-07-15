@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <title>HCR Web Twin - Connected & Mocked</title>
+    <title>HCR Web Twin</title>
     <style>
         html, body { margin: 0; height: 100%; overflow: hidden; background: #111; color: #eee; font-family: sans-serif; }
         #c { width: 100%; height: 100%; touch-action: none; display: block; }
@@ -16,6 +16,7 @@
     <canvas id="c"></canvas>
     <script src="https://cdn.babylonjs.com/babylon.js"></script>
     <script type="module">
+
     import init, { WebSimulator } from "./pkg/haircut_core.js";
 
     async function run() {
@@ -39,7 +40,7 @@
         headMat.diffuseColor = new BABYLON.Color3(0.94, 0.78, 0.66);
         head.material = headMat;
 
-        const clipperRadius = 0.08;
+        const clipperRadius = 0.12;
         const clipperMesh = BABYLON.MeshBuilder.CreateSphere("clipper", { diameter: clipperRadius * 2 }, scene);
         const clipperMat = new BABYLON.StandardMaterial("clipperMat", scene);
         clipperMat.diffuseColor = new BABYLON.Color3(1, 0.1, 0.1);
@@ -66,11 +67,7 @@
 
             const data = JSON.parse(rawString);
 
-            if (data.x !== undefined && data.y !== undefined && data.z !== undefined) {
-                clipperMesh.position.x = data.x;
-                clipperMesh.position.y = data.y;
-                clipperMesh.position.z = data.z;
-            
+            if (data.x !== undefined && data.y !== undefined && data.z !== undefined) {            
                 simulator.update_clipper(data.x, data.y, data.z);
             }
         
@@ -102,6 +99,9 @@
         engine.runRenderLoop(() => {
             simulator.step();
 
+            const cPos = simulator.get_clipper_position(); 
+            clipperMesh.position.set(cPos[0], cPos[1], cPos[2]);
+
             const updatedPositions = simulator.get_hair_positions();
             const lengths = simulator.get_hair_lengths();
 
@@ -130,8 +130,6 @@
                         lastValidPoint = currentPoint;
                         updatedPoints.push(lastValidPoint);
                     } else {
-                        // If the node is cut, collapse it into the hair's cut tip 
-                        // (or fallback to the root position if the whole strand is gone)
                         updatedPoints.push(lastValidPoint || currentPoint);
                     }
                     offset += 3;
@@ -175,7 +173,16 @@
             { topic: "twin/state/r01", payload: '{"x": -0.9, "y": 0.46, "z": 0.9, "is_cutting": true}' },
             { topic: "twin/state/r01", payload: '{"x": -0.9, "y": 0.55, "z": 0.8, "is_cutting": true}' },
             { topic: "twin/state/r01", payload: '{"x": -0.85, "y": 0.65, "z": 0.6, "is_cutting": true}' },
-            { topic: "twin/state/r01", payload: '{"x": -0.85, "y": 0.65, "z": 0.6, "is_cutting": false}' }
+            { topic: "twin/state/r01", payload: '{"x": -0.85, "y": 0.8, "z": 0.55, "is_cutting": true}' },
+            { topic: "twin/state/r01", payload: '{"x": -0.85, "y": 0.8, "z": 0.4, "is_cutting": true}' },
+            { topic: "twin/state/r01", payload: '{"x": -0.85, "y": 0.8, "z": 0.3, "is_cutting": true}' },
+            { topic: "twin/state/r01", payload: '{"x": -0.85, "y": 0.9, "z": 0.3, "is_cutting": true}' },
+            { topic: "twin/state/r01", payload: '{"x": -0.75, "y": 1.0, "z": 0.3, "is_cutting": true}' },
+            { topic: "twin/state/r01", payload: '{"x": -0.65, "y": 1.0, "z": 0.25, "is_cutting": true}' },
+            { topic: "twin/state/r01", payload: '{"x": -0.55, "y": 1.1, "z": 0.15, "is_cutting": true}' },
+            { topic: "twin/state/r01", payload: '{"x": -0.45, "y": 1.1, "z": 0.15, "is_cutting": true}' },
+            { topic: "twin/state/r01", payload: '{"x": -0.45, "y": 1.1, "z": 0.05, "is_cutting": true}' },
+            { topic: "twin/state/r01", payload: '{"x": -0.45, "y": 1.1, "z": 0.05, "is_cutting": false}' }
                         
         ];
 

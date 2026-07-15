@@ -59,4 +59,31 @@ impl ClipperState {
     pub fn resolve_against_head(&mut self, head: &Ellipsoid) {
         self.actual_pos = head.resolve_sphere_contact(self.target_pos, self.radius);
     }
+
+    pub fn update_kinematics(&mut self, speed: f32, dt: f32) {
+        let dx = self.target_pos.x - self.actual_pos.x;
+        let dy = self.target_pos.y - self.actual_pos.y;
+        let dz = self.target_pos.z - self.actual_pos.z;
+
+        let distance = (dx * dx + dy * dy + dz * dz).sqrt();
+
+        if distance < 0.0001 {
+            self.actual_pos.x = self.target_pos.x;
+            self.actual_pos.y = self.target_pos.y;
+            self.actual_pos.z = self.target_pos.z;
+        } else {
+            let max_step = speed * dt;
+
+            if max_step >= distance {
+                self.actual_pos.x = self.target_pos.x;
+                self.actual_pos.y = self.target_pos.y;
+                self.actual_pos.z = self.target_pos.z;
+            } else {
+                let ratio = max_step / distance;
+                self.actual_pos.x += dx * ratio;
+                self.actual_pos.y += dy * ratio;
+                self.actual_pos.z += dz * ratio;
+            }
+        }
+    }
 }

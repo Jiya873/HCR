@@ -64,6 +64,13 @@ impl WebSimulator {
         positions
     }
 
+    pub fn get_clipper_position(&self) -> Vec<f32> {
+        let clipper = self.engine.clipper();
+        
+        let pos = clipper.actual_pos; 
+        vec![pos.x, pos.y, pos.z]
+    }
+
     pub fn update_clipper(&mut self, x: f32, y: f32, z: f32) {
         let cmd = RuntimeCommand::Clipper(ClipperCommand::SetTargetXyz { x, y, z });
         let _ = self.engine.apply_command(cmd);
