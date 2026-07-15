@@ -84,4 +84,30 @@ impl WebSimulator {
         };
         let _ = self.engine.apply_command(RuntimeCommand::Clipper(cmd));
     }
+
+    pub fn get_debris_positions(&self) -> Vec<f32> {
+        let mut positions = Vec::new();
+        
+        for segment in self.engine.debris() {
+            for point in &segment.points {
+                positions.push(point.position.x);
+                positions.push(point.position.y);
+                positions.push(point.position.z);
+            }
+        }
+        
+        positions
+    }
+    
+    pub fn get_debris_count(&self) -> usize {
+        self.engine.debris().len()
+    }
+
+    pub fn get_debris_lengths(&self) -> Vec<usize> {
+        self.engine
+            .debris()
+            .iter()
+            .map(|segment| segment.points.len())
+            .collect()
+    }
 }

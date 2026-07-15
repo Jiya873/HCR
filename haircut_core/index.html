@@ -96,16 +96,19 @@
             hairMeshes.push(hairMesh);
         }
 
+        const debrisMeshes = [];
         engine.runRenderLoop(() => {
             simulator.step();
 
-            const cPos = simulator.get_clipper_position(); 
-            clipperMesh.position.set(cPos[0], cPos[1], cPos[2]);
-
             const updatedPositions = simulator.get_hair_positions();
             const lengths = simulator.get_hair_lengths();
-
+            const debrisLengths = simulator.get_debris_lengths();
+            const debrisPos = simulator.get_debris_positions();
+            const cPos = simulator.get_clipper_position(); 
             const cutHairsCount = Array.from(lengths).filter(l => l < 12).length;
+
+            clipperMesh.position.set(cPos[0], cPos[1], cPos[2]);
+
             if (cutHairsCount > 0) {
                 console.log(` Rust SIM is working! ${cutHairsCount} hairs have been cut.`);
             } else {
@@ -143,6 +146,36 @@
                     hairMeshes[s].isVisible = true;
                 } else {
                     hairMeshes[s].isVisible = false;
+                }
+            }
+            
+            let flatIndex = 0;
+            for (let i = 0; i < debrisLengths.length; i++) {
+                const numPoints = debrisLengths[i];
+                const pointsForDebris = [];
+            
+                for (let p = 0; p < numPoints; p++) {
+                    pointsForDebris.push(new BABYLON.Vector3(
+                        debrisPos[flatIndex],
+                        debrisPos[flatIndex + 1],
+                        debrisPos[flatIndex + 2]
+                    ));
+                    flatIndex += 3;
+                }
+            
+                if (debrisMeshes[i]) {
+                    debrisMeshes[i] = BABYLON.MeshBuilder.CreateLines(null, { 
+                        points: pointsForDebris, 
+                        instance: debrisMeshes[i] 
+                    });
+                } else {
+                    const dMesh = BABYLON.MeshBuilder.CreateLines("debris_" + i, { 
+                        points: pointsForDebris, 
+                        updatable: true 
+                    }, scene);
+
+                    dMesh.color = new BABYLON.Color3(0.4, 0.4, 0.4); 
+                    debrisMeshes.push(dMesh);
                 }
             }
             scene.render();

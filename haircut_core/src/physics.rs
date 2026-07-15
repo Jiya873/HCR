@@ -78,8 +78,8 @@ pub fn update_strands(
                     position: node.position,
                     velocity: Vec3::new(
                         rng.gen_range(-0.025..0.025),
+                        0.0, 
                         rng.gen_range(-0.025..0.025),
-                        gravity.y * 0.5,
                     ),
                     is_stopped: false,
                 })
@@ -94,8 +94,8 @@ pub fn update_strands(
     }
 }
 
-pub fn update_debris(debris: &mut [DebrisSegment], gravity: Vec3, floor_z: f32, dt: f32) {
+pub fn update_debris(debris: &mut [DebrisSegment], gravity: Vec3, floor_y: f32, dt: f32) {
     for segment in debris {
-        segment.update(gravity, floor_z, dt);
+        segment.update(gravity, floor_y, dt);
     }
 }

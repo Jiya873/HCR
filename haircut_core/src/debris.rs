@@ -21,7 +21,7 @@ impl DebrisSegment {
         self.points.is_empty()
     }
 
-    pub fn update(&mut self, gravity: Vec3, floor_z: f32, dt: f32) {
+    pub fn update(&mut self, gravity: Vec3, floor_y: f32, dt: f32) {
         for point in &mut self.points {
             if point.is_stopped {
                 continue;
@@ -30,8 +30,8 @@ impl DebrisSegment {
             point.velocity += gravity * (1.5 * dt);
             point.position += point.velocity * dt;
 
-            if point.position.z <= floor_z {
-                point.position.z = floor_z;
+            if point.position.y <= floor_y {
+                point.position.y = floor_y;
                 point.velocity = Vec3::ZERO;
                 point.is_stopped = true;
             }
