@@ -13,7 +13,6 @@
     <canvas id="c"></canvas>
     <script src="https://cdn.babylonjs.com/babylon.js"></script>
     <script type="module">
-
     import init, { WebSimulator } from "./pkg/haircut_core.js";
 
     async function run() {
@@ -67,6 +66,11 @@
             if (data.is_cutting !== undefined) {
                 simulator.set_cutting(data.is_cutting);
             }
+
+            if (data.hair_lengths && Array.isArray(data.hair_lengths)) {
+            const lengthsArray = new Float32Array(data.hair_lengths);
+            simulator.sync_server_lengths(lengthsArray);
+            }
         });
 
         const totalHairStrands = 650;
@@ -94,8 +98,11 @@
         }
 
         const debrisMeshes = [];
-        engine.runRenderLoop(() => {
-            simulator.step();
+        engine.runRenderLoop(async () => {
+            const startTime = performance.now();
+            await simulator.step_async();
+            const physicsTime = performance.now() - startTime;
+            console.log(`FPS: ${engine.getFps().toFixed(1)} | Physics Time: ${physicsTime.toFixed(2)} ms`);
 
             const hPosPtr = simulator.get_hair_positions_ptr();
             const hPosLen = simulator.get_hair_positions_len();

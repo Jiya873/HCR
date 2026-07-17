@@ -216,13 +216,41 @@ impl Simulation {
         }
     }
 
+    pub fn sync_server_lengths(&mut self, server_lengths: &[f32]) {
+        for (i, strand) in self.strands.iter_mut().enumerate() {
+            if i >= server_lengths.len() { break; }
+            
+            let target_len = server_lengths[i] as usize;
+            
+            if strand.active_len > target_len && target_len > 0 {
+                strand.shorten_to(target_len);
+            }
+        }
+    }
+
+    pub fn update_kinematics_and_debris(&mut self) {
+        self.clipper.update_kinematics(self.config.tuning.move_speed, self.config.tuning.dt);
+        self.clipper.resolve_against_head(&self.head);
+        
+        update_debris(
+            &mut self.debris,
+            self.config.tuning.gravity,
+            self.config.bounds.floor_y,
+            self.config.tuning.dt,
+        );
+    }
+
+    pub fn strands_mut(&mut self) -> &mut [HairStrand] {
+        &mut self.strands
+    }
+
     fn apply_clipper_command(&mut self, cmd: ClipperCommand) -> Result<(), String> {
         if let Some(delta) = clipper_delta(&cmd, self.config.tuning.move_speed) {
             self.clipper
                 .move_by(delta, self.config.bounds.min, self.config.bounds.max);
         } else {
             match cmd {
-                ClipperCommand::SetTargetXyz { x, y, z } => { // <-- CHANGED THIS
+                ClipperCommand::SetTargetXyz { x, y, z } => { 
                     if !x.is_finite() || !y.is_finite() || !z.is_finite() {
                         return Err("clipper target coordinates must be finite".to_string());
                     }
@@ -232,12 +260,7 @@ impl Simulation {
                 ClipperCommand::Reset => self.reset_clipper(),
                 ClipperCommand::ActivateCutting => self.clipper.set_cutting(true),
                 ClipperCommand::DeactivateCutting => self.clipper.set_cutting(false),
-                ClipperCommand::MoveUp
-                | ClipperCommand::MoveDown
-                | ClipperCommand::MoveLeft
-                | ClipperCommand::MoveRight
-                | ClipperCommand::MoveForward
-                | ClipperCommand::MoveBackward => unreachable!(),
+                _ => {}
             }
         }
 

@@ -91,3 +91,6 @@ endpoint! {
             .content_type(HttpContentType::ImageSvg())
     }
 }
+
+#[cfg(test)]
+mod tests;

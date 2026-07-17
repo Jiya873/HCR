@@ -73,7 +73,7 @@ impl Default for TuningConfig {
             hair_length: 1.0,
             density_factor: 1.0,
             nodes_per_strand: 12,
-            base_num_strands: 650,
+            base_num_strands: 1650,
             clipper_radius: 0.12,
             move_speed: 0.04,
             dt: 0.2,
@@ -94,7 +94,6 @@ impl Default for SimulationConfig {
 }
 
 impl SimulationConfig {
-    /// Rejects non-finite or out-of-range fields; returns the first violation found.
     pub fn validate(&self) -> Result<(), String> {
         if !is_finite_vec3(self.head.center) {
             return Err("head center must be finite".to_string());
