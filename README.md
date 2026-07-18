@@ -23,6 +23,3 @@ This project is a 3D digital twin simulator for hair-cutting robotics. It utiliz
     cd ..
     # Start local server from this root directory
     ```
-
-## Important Note
-The hotaru_mqtt folder is a required mock dependency to ensure the workspace builds correctly. Please do not remove it, as it is structured to interface with the system's internal broker.
