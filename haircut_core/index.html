@@ -19,7 +19,8 @@
         const wasm = await init();
 
         const canvas = document.getElementById("c");
-        const engine = new BABYLON.Engine(canvas, true, { adaptToDeviceRatio: true });
+        const engine = new BABYLON.WebGPUEngine(canvas, { antialias: true, adaptToDeviceRatio: true });
+        await engine.initAsync();
 
         const scene = new BABYLON.Scene(engine);
         scene.clearColor = new BABYLON.Color4(0.07, 0.07, 0.07, 1);
