@@ -5,8 +5,10 @@ edition = "2024"
 build = "build.rs"
 
 [dependencies]
+hotaru_mqtt = { path = "../hotaru_mqtt" }
 hotaru = "0.8.1"
 tokio = { version = "1", features = ["full", "test-util"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 haircut_core = { path = "../haircut_core" }
+bytes = "1.12.1"

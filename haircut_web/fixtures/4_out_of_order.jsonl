@@ -1,0 +1,4 @@
+{"t":0, "dir":"in", "topic":"plan/candidate", "payload":{"plan_id":"126","seq":2,"stage":"trim","robot_id":"r01","trajectory":[],"requires_confirm":false}}
+{"t":10, "dir":"in", "topic":"plan/candidate", "payload":{"plan_id":"126","seq":1,"stage":"trim","robot_id":"r01","trajectory":[],"requires_confirm":false}}
+{"t":15, "dir":"out", "topic":"plan/approve", "payload":{"plan_id":"126","seq":1}}
+{"t":20, "dir":"out", "topic":"plan/approve", "payload":{"plan_id":"126","seq":2}}

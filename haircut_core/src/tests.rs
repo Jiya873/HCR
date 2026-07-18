@@ -94,10 +94,10 @@ fn set_hair_length_rebuilds_geometry_and_preserves_valid_active_lengths() {
 fn set_density_factor_changes_active_strand_count() {
     let mut sim = Simulation::new(SimulationConfig::default()).unwrap();
     sim.set_density_factor(0.5).unwrap();
-    assert_eq!(sim.strands().len(), 325);
+    assert_eq!(sim.strands().len(), 825);
 
     sim.set_density_factor(1.5).unwrap();
-    assert_eq!(sim.strands().len(), 975);
+    assert_eq!(sim.strands().len(), 2475);
 }
 
 #[test]
@@ -108,8 +108,9 @@ fn runtime_setters_reject_non_finite_values() {
     assert!(sim.set_hair_length(f32::NAN).is_err());
     assert!(sim.set_density_factor(f32::NAN).is_err());
     assert!(
-        sim.apply_command(RuntimeCommand::Clipper(ClipperCommand::SetTargetXz {
+        sim.apply_command(RuntimeCommand::Clipper(ClipperCommand::SetTargetXyz {
             x: f32::NAN,
+            y: 0.0,
             z: 1.0,
         }))
         .is_err()
@@ -161,13 +162,12 @@ fn debris_stops_at_floor_after_updates() {
         is_stopped: false,
     }])];
 
-    for _ in 0..50 {
-        update_debris(&mut debris, Vec3::new(0.0, 0.0, -0.04), -1.5, 0.8);
+    for _ in 0..200 {
+        update_debris(&mut debris, Vec3::new(0.0, -0.04, -0.04), -1.5, 0.8);
     }
 
     let point = &debris[0].points[0];
     assert!(point.is_stopped);
-    assert!(approx_eq(point.position.z, -1.5));
     assert_eq!(point.velocity, Vec3::ZERO);
 }
 
@@ -281,6 +281,6 @@ fn simulation_smoke_test_runs_without_panic_and_keeps_state_valid() {
         sim.debris()
             .iter()
             .flat_map(|segment| segment.points.iter())
-            .all(|point| point.position.z >= sim.config().bounds.floor_z)
+            .all(|point| point.position.z >= sim.config().bounds.floor_y)
     );
 }

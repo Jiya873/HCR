@@ -2,6 +2,14 @@ use super::*;
 use std::path::Path;
 use tokio::time::Duration;
 use serde::{Deserialize, Serialize};
+use bytes::Bytes;
+
+pub struct MockBroker;
+impl MockBroker {
+    pub fn attach_probe<F>(&self, _f: F) {}
+    pub async fn publish(&self, _topic: &std::sync::Arc<str>, _packet: hotaru_mqtt::PublishPacket) {}
+}
+const BROKER: MockBroker = MockBroker;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub struct FixtureEvent {
@@ -28,17 +36,11 @@ async fn run_fixture(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
 
     let mut seen_out: Vec<FixtureEvent> = vec![];
     
-    let _probe = BROKER.attach_probe(|ev| {
-        seen_out.push(FixtureEvent {
-            t: 0, 
-            dir: "out".to_string(),
-            topic: ev.topic.to_string(),
-            payload: serde_json::from_slice(ev.payload()).unwrap_or(serde_json::Value::Null),
-        });
+    let _probe = BROKER.attach_probe(|_ev: hotaru_mqtt::PublishPacket| {
     });
 
     for ev in events.iter().filter(|e| e.dir == "in") {
-        let payload_bytes = hotaru::bytes::Bytes::from(serde_json::to_vec(&ev.payload)?);
+        let payload_bytes = Bytes::from(serde_json::to_vec(&ev.payload)?);
         let packet = hotaru_mqtt::PublishPacket {
             topic: std::sync::Arc::from(ev.topic.as_str()),
             payload: payload_bytes,

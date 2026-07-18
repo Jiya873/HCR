@@ -433,8 +433,10 @@ dependencies = [
 name = "haircut_web"
 version = "0.1.0"
 dependencies = [
+ "bytes",
  "haircut_core",
  "hotaru",
+ "hotaru_mqtt",
  "serde",
  "serde_json",
  "tokio",
@@ -539,6 +541,14 @@ checksum = "f073d46fa1ed30c1e3fb9f829db472867804bdd400b6f48f0312e4ce1ec92c72"
 dependencies = [
  "percent-encoding",
  "rand 0.9.5",
+]
+
+[[package]]
+name = "hotaru_mqtt"
+version = "0.8.2"
+dependencies = [
+ "bytes",
+ "tokio",
 ]
 
 [[package]]

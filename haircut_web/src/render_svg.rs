@@ -27,7 +27,7 @@ pub fn render(sim: &Simulation, tick: u64) -> String {
         r##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="-3 -3 6 6" preserveAspectRatio="xMidYMid meet" style="background:#f8f8fa">"##
     );
 
-    let floor_z = cfg.bounds.floor_z;
+    let floor_z = cfg.bounds.floor_y;
     let _ = write!(s, r##"<g stroke="#c8c8cc" stroke-width="0.008" fill="none">"##);
     let (g_min, g_max, g_step) = (-2.0_f32, 2.0_f32, 0.5_f32);
     let mut g = g_min;

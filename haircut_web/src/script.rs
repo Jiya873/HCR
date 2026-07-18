@@ -51,38 +51,27 @@ pub struct CutLine;
 
 impl MovementScript for CutLine {
     fn tick(&mut self, t: u64, sim: &mut Simulation) {
-        // Phase 1: push the clipper forward until it is over the head.
-        // 42 MoveForward calls × move_speed 0.04 ≈ 1.68 → Y moves from -1.7 to ~0.
         const APPROACH: u64 = 42;
         if t < APPROACH {
             let _ = sim.apply_command(RuntimeCommand::Clipper(ClipperCommand::MoveForward));
             return;
         }
 
-        // Phase 2: turn the cutter on once, the first tick we're in position.
         if t == APPROACH {
             let _ = sim.apply_command(RuntimeCommand::Clipper(ClipperCommand::ActivateCutting));
         }
 
-        // Phase 3: sweep the clipper from x = -1.0 to x = +1.0 over 200 ticks.
-        //           Z is held constant — this draws a straight line cut.
         const SWEEP_TICKS: f32 = 200.0;
         let progress = ((t - APPROACH) as f32 / SWEEP_TICKS).clamp(0.0, 1.0);
         let x = -1.0 + 2.0 * progress * progress;
-        let z = 2.0 - 1.0 * progress; // slight downward slope looks nicer 
-        let _ = sim.apply_command(RuntimeCommand::Clipper(ClipperCommand::SetTargetXz {
+        let z = 2.0 - 1.0 * progress; 
+        let _ = sim.apply_command(RuntimeCommand::Clipper(ClipperCommand::SetTargetXyz {
             x,
+            y: 0.0,
             z,
         }));
-
-        // === Students: rewrite the body above to draw your own haircut. ===
     }
 }
-
-// =========================================================================
-// Reference implementation: a back-and-forth raster sweep.
-// Selected with `HAIRCUT_SCRIPT=raster`.
-// =========================================================================
 
 #[derive(Default)]
 pub struct RasterSweep;
@@ -91,8 +80,9 @@ impl MovementScript for RasterSweep {
     fn tick(&mut self, t: u64, sim: &mut Simulation) {
         const APPROACH: u64 = 42;
         if t == 0 {
-            let _ = sim.apply_command(RuntimeCommand::Clipper(ClipperCommand::SetTargetXz {
+            let _ = sim.apply_command(RuntimeCommand::Clipper(ClipperCommand::SetTargetXyz {
                 x: -1.0,
+                y: 0.0,
                 z: 2.3,
             }));
         }
@@ -112,8 +102,9 @@ impl MovementScript for RasterSweep {
             1.0 - 2.0 * local
         };
         let z = 2.30 - (row as f32) * 0.18;
-        let _ = sim.apply_command(RuntimeCommand::Clipper(ClipperCommand::SetTargetXz {
+        let _ = sim.apply_command(RuntimeCommand::Clipper(ClipperCommand::SetTargetXyz {
             x,
+            y: 0.0,
             z,
         }));
     }

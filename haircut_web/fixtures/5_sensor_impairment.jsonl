@@ -1,0 +1,4 @@
+{"t":0, "dir":"in", "topic":"plan/candidate", "payload":{"plan_id":"127","seq":1,"stage":"trim","robot_id":"r01","trajectory":[],"requires_confirm":false}}
+{"t":10, "dir":"in", "topic":"sensor/skin/r01/dist", "payload":{"d_mm":12.4}}
+{"t":250, "dir":"out", "topic":"plan/reject", "payload":{"plan_id":"127","reason":"sensor_stale"}}
+{"t":250, "dir":"out", "topic":"audit/entry", "payload":{"plan_id":"127","verdict":"reject","constraints":[{"name":"sensor_freshness","ok":false}]}}
